@@ -1,20 +1,21 @@
 <?php
 
-namespace Clystnet\Vtiger;
+namespace Tzendos\Vtiger;
 
-use GuzzleHttp\Exception\GuzzleException;
+use DB;
+use Cache;
+use Config;
 use GuzzleHttp\Client;
 use InvalidArgumentException;
+use Illuminate\Database\Query\Builder;
 use Psr\Http\Message\ResponseInterface;
-use Config;
-use Cache;
-use DB;
+use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * Laravel wrapper for the VTgier API
  *
  * Class Vtiger
- * @package Clystnet\Vtiger
+ * @package Tzendos\Vtiger
  */
 class Vtiger
 {
@@ -102,7 +103,7 @@ class Vtiger
     protected function sessionId()
     {
         // Get the sessionData from the cache
-        $sessionData = json_decode(Cache::get('clystnet_vtiger'));
+        $sessionData = json_decode(Cache::get('tzendos_vtiger'));
 
         if (isset($sessionData)) {
             if (isset($sessionData) &&
@@ -173,10 +174,10 @@ class Vtiger
         if ($response->getStatusCode() !== 200 || !$loginResult->success) {
             if (!$loginResult->success) {
                 if ($loginResult->error->code == 'INVALID_USER_CREDENTIALS' || $loginResult->error->code == 'INVALID_SESSIONID') {
-                    if (!Cache::has('clystnet_vtiger')) {
-                        throw VtigerError::init($this->vTigerErrors, 8, 'Nothing to delete for index clystnet_vtiger');
+                    if (!Cache::has('tzendos_vtiger')) {
+                        throw VtigerError::init($this->vTigerErrors, 8, 'Nothing to delete for index tzendos_vtiger');
                     } else {
-                        Cache::forget('clystnet_vtiger');
+                        Cache::forget('tzendos_vtiger');
                     }
                 } else {
                     $this->_processResult($response);
@@ -188,12 +189,12 @@ class Vtiger
             // login ok so get sessionid and update our session
             $sessionId = $loginResult->result->sessionName;
 
-            if (Cache::has('clystnet_vtiger')) {
-                $json = json_decode(Cache::pull('clystnet_vtiger'));
+            if (Cache::has('tzendos_vtiger')) {
+                $json = json_decode(Cache::pull('tzendos_vtiger'));
                 $json->sessionid = $sessionId;
-                Cache::forever('clystnet_vtiger', json_encode($json));
+                Cache::forever('tzendos_vtiger', json_encode($json));
             } else {
-                throw VtigerError::init($this->vTigerErrors, 8, 'There is no key for index clystnet_vtiger.');
+                throw VtigerError::init($this->vTigerErrors, 8, 'There is no key for index tzendos_vtiger.');
             }
         }
 
@@ -211,7 +212,7 @@ class Vtiger
         $updated = $this->getToken();
 
         $output = (object)$updated;
-        $cacheResult = Cache::forever('clystnet_vtiger', json_encode($output));
+        Cache::forever('tzendos_vtiger', json_encode($output));
 
         return $output;
     }
@@ -295,21 +296,22 @@ class Vtiger
      *
      * @param string $query
      *
+     * @param array $params
      * @return \stdClass
      * @throws VtigerError
      */
-    public function query($query)
+    public function query($query, $params = [])
     {
         $sessionId = $this->sessionId();
 
         try {
             // send a request using a database query to get back any matching records
             $response = $this->guzzleClient->request('GET', $this->url, [
-                'query' => [
+                'query' => array_merge([
                     'operation' => 'query',
                     'sessionName' => $sessionId,
                     'query' => $query,
-                ],
+                ], $params),
             ]);
         } catch (GuzzleException $e) {
             throw VtigerError::init($this->vTigerErrors, 7, $e->getMessage());
@@ -320,7 +322,43 @@ class Vtiger
         return $this->_processResult($response);
     }
 
-    public function search($query, $quote = true)
+    /**
+     * Search entity by params
+     *
+     * @param array $params
+     * @return \stdClass
+     * @throws VtigerError
+     */
+    public function searchByParams($params)
+    {
+        $sessionId = $this->sessionId();
+
+        try {
+            $response = $this->guzzleClient->request(
+                'GET',
+                $this->url,
+                [
+                    'query' => array_merge([
+                        'sessionName' => $sessionId,
+                    ], $params),
+                ]
+            );
+        } catch (GuzzleException $e) {
+            throw VtigerError::init($this->vTigerErrors, 7, $e->getMessage());
+        }
+
+        $this->close($sessionId);
+
+        return $this->_processResult($response);
+    }
+
+    /**
+     * @param Builder $query
+     * @param bool $quote
+     * @return \stdClass
+     * @throws VtigerError
+     */
+    public function searchByQuery($query, $params = [], $quote = true)
     {
         $bindings = $query->getBindings();
         $queryString = $query->toSQL();
@@ -346,7 +384,7 @@ class Vtiger
         //Remove the backticks and add simicolon
         $queryString = str_replace('`', '', $queryString) . ';';
 
-        return $this->query($queryString);
+        return $this->query($queryString, $params);
     }
 
     /**
@@ -518,6 +556,50 @@ class Vtiger
 
         return $this->_processResult($response);
     }
+
+    /**
+     * @param $elementType
+     * @param int $modifiedTime
+     * @param string $syncType
+     * @return \stdClass
+     * @throws VtigerError
+     */
+    public function sync($elementType, $modifiedTime = null, $syncType = null)
+    {
+        $sessionId = $this->sessionId();
+
+        try {
+            $options = [
+                'elementType' => $elementType,
+            ];
+
+            if (!empty($modifiedTime)) {
+                $options['modifiedTime'] = $modifiedTime;
+            }
+
+            if (!empty($syncType)) {
+                $options['syncType'] = $syncType;
+            }
+
+            $response = $this->guzzleClient->request(
+                'GET',
+                $this->url,
+                [
+                    'query' => array_merge([
+                        'operation' => 'sync',
+                        'sessionName' => $sessionId,
+                    ], $options),
+                ]
+            );
+        } catch (GuzzleException $e) {
+            throw VtigerError::init($this->vTigerErrors, 7, $e->getMessage());
+        }
+
+        $this->close($sessionId);
+
+        return $this->_processResult($response);
+    }
+
 
     /**
      * Process the response from the API for errors

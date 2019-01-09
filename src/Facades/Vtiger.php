@@ -1,15 +1,17 @@
 <?php
 
-namespace Clystnet\Vtiger\Facades;
+namespace Tzendos\Vtiger\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
+/**
+ * Class Vtiger
+ * @package Tzendos\Vtiger\Facades
+ */
 class Vtiger extends Facade
 {
-
     protected static function getFacadeAccessor()
     {
-        return 'clystnet-vtiger';
+        return 'tzendos-vtiger';
     }
-
 }

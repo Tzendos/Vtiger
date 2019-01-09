@@ -1,4 +1,4 @@
-﻿# Vtiger (Laravel 5 Package)
+﻿# Vtiger (Laravel 5.7 Package)
 Use the Vtiger webservice (REST) API from within Laravel for the following operations.
 
 - Create
@@ -17,7 +17,7 @@ See [Third Party App Integration (REST APIs)](http://community.vtiger.com/help/v
 1. In order to install the Vtiger package in your Laravel project, just run the composer require command from your terminal:
 
     ```
-    composer require "clystnet/vtiger ^1.4"
+    composer require "tzendos/vtiger ^1.0"
     ```
 
     > *If you are using Laravel >= 5.5 you don’t need to do steps 2 and 3.*

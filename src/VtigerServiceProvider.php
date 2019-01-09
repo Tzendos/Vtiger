@@ -1,6 +1,6 @@
 <?php
 
-namespace Clystnet\Vtiger;
+namespace Tzendos\Vtiger;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +14,6 @@ class VtigerServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
         $this->publishes([
             __DIR__ . '/Config/config.php' => config_path('vtiger.php'),
         ], 'vtiger');
@@ -23,7 +22,6 @@ class VtigerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__ . '/Config/config.php', 'vtiger'
         );
-
     }
 
     /**

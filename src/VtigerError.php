@@ -1,10 +1,9 @@
 <?php
 
-namespace Clystnet\Vtiger;
+namespace Tzendos\Vtiger;
 
 class VtigerError extends \Exception
 {
-
     /**
      * Build a new VtigerError using the specified error from the errors array
      *
@@ -19,5 +18,4 @@ class VtigerError extends \Exception
         return new self($errorsArray[$codeToUse]->getMessage() . $extraMessage,
             $errorsArray[$codeToUse]->getErrorCode());
     }
-
 }

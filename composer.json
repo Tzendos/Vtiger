@@ -1,35 +1,37 @@
 {
-    "name": "clystnet/vtiger",
+    "name": "tzendos/vtiger",
     "type": "laravel",
     "description": "Package to run Vtiger Webservice API",
-    "keywords": ["laravel", "vtiger"],
-    "homepage": "https://github.com/Clystnet/Vtiger",
+    "keywords": [
+        "laravel",
+        "vtiger"
+    ],
+    "homepage": "https://github.com/Tzendos/Vtiger",
     "license": "MIT",
     "authors": [
         {
-            "name": "Adam Godfrey",
-            "email": "adam.godfrey@clystnet.com",
-            "homepage": "https://www.clystnet.com",
+            "name": "Vladimir Pogarsky",
+            "email": "hacking.memory@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
-        "php": ">=5.6.0",
+        "php": ">=7.1.0",
         "guzzlehttp/guzzle": "~6.0"
     },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Clystnet\\Vtiger\\": "src/"
+            "Tzendos\\Vtiger\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Clystnet\\Vtiger\\VtigerServiceProvider"
+                "Tzendos\\Vtiger\\VtigerServiceProvider"
             ],
             "aliases": {
-                "Vtiger": "Clystnet\\Vtiger\\Facades\\Vtiger"
+                "Vtiger": "Tzendos\\Vtiger\\Facades\\Vtiger"
             }
         }
     }

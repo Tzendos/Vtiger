@@ -1,6 +1,6 @@
 <?php
 
-namespace Clystnet\Vtiger;
+namespace Tzendos\Vtiger;
 
 class VtigerErrorElement
 {
